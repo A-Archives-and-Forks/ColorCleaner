@@ -11,7 +11,7 @@ from time import time
 import requests
 
 import ccglobal
-import config
+from ccglobal import log
 from util import adb
 from util import crypto
 from util import imgfile
@@ -31,8 +31,7 @@ class RegionCN(Enum):
                 1615879139745,
                 'params',
                 'SCENE_1',
-                'body',
-                'opex > opexPackage')
+                'body')
     OPEX =     ('https://opex-service-cn.allawntech.com/queryUpdate', 1, '\
                 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAr/B2JwdaZIQqVpx10R4R\
                 o/ZjCLzssu3vIZCKNwDh4LMBkeHRjcjtaVPoPvvTKY74XlMg7fmRv0iQELnlFNtH\
@@ -44,12 +43,11 @@ class RegionCN(Enum):
                 1631001537253,
                 None,
                 'opex',
-                None,
-                'data')
+                None)
     # @formatter:on
 
     def __init__(self, url: str, request_version: int, public_key: str, negotiation_version: int,
-                 request_body_json_root: str, protected_key_json_root: str, response_body_json_root: str, opex_json_root: str):
+                 request_body_json_root: str, protected_key_json_root: str, response_body_json_root: str):
         self.url = url
         self.request_version = str(request_version)
         self.public_key = public_key
@@ -57,7 +55,6 @@ class RegionCN(Enum):
         self.request_body_json_root = request_body_json_root
         self.protected_key_json_root = protected_key_json_root
         self.response_body_json_root = response_body_json_root
-        self.opex_json_root = opex_json_root
 
 
 def create_headers(prop_file: os.PathLike[str]):
@@ -104,7 +101,7 @@ def create_headers(prop_file: os.PathLike[str]):
 
 def create_request_body(headers: dict[str, str]):
     # @formatter:off
-    request_body: dict[str, str] = {
+    request_body: dict = {
         'mode'         : '0',
         'isRooted'     : '0',
         'isLocked'     : True,
@@ -119,23 +116,9 @@ def create_request_body(headers: dict[str, str]):
     return request_body
 
 
-def get_wrapped_json(keys: str, json_dict: dict):
-    if not keys:
-        return json_dict
-    keys = keys.replace(' ', '')
-    index = keys.find('>')
-
-    if index == -1:
-        return json_dict[keys]
-    return get_wrapped_json(keys[index + 1:], json_dict[keys[:index]])
-
-
-def get_opex_update_for_current(headers: dict[str, str], request_body: dict[str, str]):
-    if config.OPEX_FULL_OTA_CHECK:
-        operator = RegionCN.FULL_OTA
+def get_target_opex_update(operator: RegionCN, headers: dict[str, str], request_body: dict[str, str]):
+    if operator == RegionCN.FULL_OTA:
         headers['otaVersion'] = f'{headers['otaVersion'][:-17]}0001_000000000001'
-    else:
-        operator = RegionCN.OPEX
 
     key, iv, cipher = crypto.aes_encrypt(json.dumps(request_body).encode('utf-8'))
     request_body = {
@@ -167,7 +150,11 @@ def get_opex_update_for_current(headers: dict[str, str], request_body: dict[str,
     cipher = response_body['cipher']
     response_body = json.loads(crypto.aes_decrypt(key, iv.encode('utf-8'), cipher.encode('utf-8')))
 
-    return get_wrapped_json(operator.opex_json_root, response_body)
+    match operator:
+        case RegionCN.FULL_OTA:
+            return response_body['otaVersion'], response_body['opex']['opexPackage']
+        case RegionCN.OPEX:
+            return headers['otaVersion'], response_body['data']
 
 
 def unpack_img(opex_files: list[str]):
@@ -251,4 +238,11 @@ def fetch_opex():
 
     headers = create_headers(prop_file)
     request_body = create_request_body(headers)
-    return get_opex_update_for_current(headers, request_body)
+    target_ota_version = request_body['otaVersion']
+
+    ota_version, opex_list = get_target_opex_update(RegionCN.FULL_OTA, headers.copy(), request_body.copy())
+    if ota_version != target_ota_version:
+        log('此版本还未正式推送')
+        _, opex_list = get_target_opex_update(RegionCN.OPEX, headers, request_body)
+
+    return opex_list
