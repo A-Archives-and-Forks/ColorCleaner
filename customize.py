@@ -417,14 +417,14 @@ def disable_launcher_clock_red_one():
     apk.build()
 
 
-def show_touchscreen_panel_info():
+def show_hidden_engineer_option():
     apk = ApkFile('system_ext/app/OplusCommercialEngineerMode/OplusCommercialEngineerMode.apk')
     if apk.not_need_modify():
         return
     apk.refactor()
-    apk.decode(no_res=False)
+    apk.decode()
 
-    ccglobal.log('显示工程模式中的屏生产信息')
+    ccglobal.log('显示工程模式中的隐藏选项')
     xml = apk.open_xml('xml/as_multimedia_test.xml')
     root = xml.get_root()
     attr_title = xml.make_attr_key('android:title')
@@ -436,6 +436,12 @@ def show_touchscreen_panel_info():
             new_element.find('intent').set(xml.make_attr_key('android:targetClass'), 'com.oplus.engineermode.display.lcd.modeltest.LcdInfoActivity')
             root.insert(index + 1, new_element)
     xml.commit()
+
+    smali = apk.open_smali('com/oplus/engineermode/impl/SecrecyServiceHelper.smali')
+    specifier = MethodSpecifier()
+    specifier.name = 'getSecrecyState'
+    specifier.parameters = 'I'
+    smali.method_return_boolean(specifier, False)
 
     apk.build()
 
@@ -1129,7 +1135,7 @@ def run_on_rom():
     patch_theme_store()
     disable_lock_screen_red_one()
     disable_launcher_clock_red_one()
-    show_touchscreen_panel_info()
+    show_hidden_engineer_option()
     show_netmask_and_gateway()
     patch_settings()
     patch_phone_manager()
