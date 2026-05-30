@@ -235,6 +235,11 @@
     invoke-virtual {v2, v6}, Landroidx/preference/Preference;->setVisible(Z)V
 
     :goto_2
+    if-nez v4, :cond_4
+
+    if-eqz v5, :cond_a
+
+    :cond_4
     new-instance v6, Ljava/util/ArrayList;
 
     invoke-direct {v6}, Ljava/util/ArrayList;-><init>()V
@@ -252,7 +257,7 @@
 
     move-result v11
 
-    if-eqz v11, :cond_7
+    if-eqz v11, :cond_8
 
     invoke-interface {v10}, Ljava/util/Iterator;->next()Ljava/lang/Object;
 
@@ -264,18 +269,18 @@
 
     move-result v12
 
-    if-nez v12, :cond_4
+    if-nez v12, :cond_5
 
     goto :goto_3
 
-    :cond_4
+    :cond_5
     invoke-virtual {v11}, Landroid/net/RouteInfo;->getGateway()Ljava/net/InetAddress;
 
     move-result-object v12
 
     instance-of v13, v12, Ljava/net/Inet4Address;
 
-    if-eqz v13, :cond_5
+    if-eqz v13, :cond_6
 
     invoke-virtual {v12}, Ljava/net/InetAddress;->getHostAddress()Ljava/lang/String;
 
@@ -287,7 +292,7 @@
 
     goto :goto_4
 
-    :cond_5
+    :cond_6
     invoke-virtual {v12}, Ljava/net/InetAddress;->getHostAddress()Ljava/lang/String;
 
     move-result-object v13
@@ -301,22 +306,22 @@
 
     move/from16 v14, v16
 
-    if-ne v13, v14, :cond_6
+    if-ne v13, v14, :cond_7
 
     goto :goto_5
 
-    :cond_6
+    :cond_7
     move/from16 v16, v14
 
     goto :goto_3
 
-    :cond_7
+    :cond_8
     :goto_5
     invoke-virtual {v6}, Ljava/util/ArrayList;->isEmpty()Z
 
     move-result v10
 
-    if-nez v10, :cond_8
+    if-nez v10, :cond_9
 
     const/4 v10, 0x1
 
@@ -336,11 +341,12 @@
 
     goto :goto_6
 
-    :cond_8
+    :cond_9
     const/4 v14, 0x0
 
     invoke-virtual {v3, v14}, Landroidx/preference/Preference;->setVisible(Z)V
 
+    :cond_a
     :goto_6
     return-void
 .end method

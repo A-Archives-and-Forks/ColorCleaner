@@ -45,27 +45,29 @@ public class CcInjector {
             ipv4AddressPreference.setVisible(false);
         }
 
-        ArrayList<String> gateways = new ArrayList<>();
-        for (RouteInfo routeInfo : linkProperties.getRoutes()) {
-            if (!routeInfo.isDefaultRoute()) continue;
+        if (hasIpv4Address || hasIpv6Address) {
+            ArrayList<String> gateways = new ArrayList<>();
+            for (RouteInfo routeInfo : linkProperties.getRoutes()) {
+                if (!routeInfo.isDefaultRoute()) continue;
 
-            InetAddress gateway = routeInfo.getGateway();
-            if (gateway instanceof Inet4Address) {
-                gateways.add(0, gateway.getHostAddress());
-            } else {
-                gateways.add(gateway.getHostAddress());
+                InetAddress gateway = routeInfo.getGateway();
+                if (gateway instanceof Inet4Address) {
+                    gateways.add(0, gateway.getHostAddress());
+                } else {
+                    gateways.add(gateway.getHostAddress());
+                }
+
+                if (gateways.size() == 2)
+                    break;
             }
 
-            if (gateways.size() == 2)
-                break;
-        }
-
-        if (!gateways.isEmpty()) {
-            ipv6AddressPreference.setVisible(true);
-            ipv6AddressPreference.setTitle("网关");
-            ipv6AddressPreference.setSummary(String.join("\n", gateways));
-        } else {
-            ipv6AddressPreference.setVisible(false);
+            if (!gateways.isEmpty()) {
+                ipv6AddressPreference.setVisible(true);
+                ipv6AddressPreference.setTitle("网关");
+                ipv6AddressPreference.setSummary(String.join("\n", gateways));
+            } else {
+                ipv6AddressPreference.setVisible(false);
+            }
         }
     }
 }
