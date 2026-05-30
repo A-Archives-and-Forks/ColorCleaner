@@ -19,10 +19,9 @@ system/system/priv-app/UserDictionaryProvider
 system/system/apex/com.android.cellbroadcast.apex
 system_ext/app/AccessibilityMenu
 system_ext/app/CloudAccService
-system_ext/app/CrashBox
 system_ext/app/HealthService
 system_ext/app/LFEHer
-system_ext/app/LogKit
+system_ext/app/LogTrialCommercial
 system_ext/app/OTA
 system_ext/app/OTrace
 system_ext/app/Olc
@@ -73,6 +72,7 @@ my_stock/app/ColorDirectService
 my_stock/app/Ether
 my_stock/app/FileEncryption
 my_stock/app/FloatAssistant
+my_stock/app/Gleaner
 my_stock/app/Instant
 my_stock/app/InstantService
 my_stock/app/Karaoke
@@ -85,15 +85,16 @@ my_stock/app/RegService
 my_stock/app/RomUpdate
 my_stock/app/SceneMode
 my_stock/app/SecurePay
-my_stock/app/SecurityGuard
 my_stock/app/StdSP
 my_stock/app/TTSAccessibilityEngine
 my_stock/app/ViewTalk
 my_stock/app/WallpaperChooser
 my_stock/priv-app/CTAutoRegist
 my_stock/priv-app/CodeBook
+my_stock/priv-app/ContentPortal
 my_stock/priv-app/Cota
 my_stock/priv-app/DCS
+my_stock/priv-app/DRS
 my_stock/priv-app/DeviceIntegrationService
 my_stock/priv-app/GlobalSearch
 my_stock/priv-app/HeyTapSpeechAssist
@@ -102,6 +103,7 @@ my_stock/priv-app/LinktoWindows
 my_stock/priv-app/MDSService
 my_stock/priv-app/OplusScreenRecorder
 my_stock/priv-app/OplusThirdKit
+my_stock/priv-app/SecurityGuard
 my_stock/priv-app/dmp
 my_stock/non_overlay/app/OBrain
 my_stock/opex/Omoji.opex

@@ -1,4 +1,3 @@
-import copy
 import io
 import os
 import re
@@ -202,7 +201,7 @@ def patch_system_ui():
     smali = apk.open_smali('com/oplus/systemui/statusbar/notification/helper/DndAlertHelper.smali')
     specifier = MethodSpecifier()
     specifier.name = 'operateNotification'
-    specifier.parameters = 'IJZ'
+    specifier.parameters = 'IJ'
     smali.method_nop(specifier)
 
     ccglobal.log('禁用 USB 选择弹窗')
@@ -285,11 +284,6 @@ def patch_launcher():
     smali.method_return_boolean(specifier, False)
 
     ccglobal.log('桌面主页设置为第二页')
-    smali = apk.open_smali('com/android/launcher3/Workspace.smali')
-    specifier = MethodSpecifier()
-    specifier.name = 'initWorkspace'
-
-    old_body = smali.find_method(specifier)
     pattern = r'''
     invoke-static {}, Lcom/android/launcher/mode/LauncherModeManager;->getInstance\(\)Lcom/android/launcher/mode/LauncherModeManager;
 (?:.|\n)*?
@@ -297,12 +291,24 @@ def patch_launcher():
 
     (sput ([v|p]\d+), Lcom/android/launcher3/Workspace;->DEFAULT_PAGE:I)
 '''
+
+    smali = apk.open_smali('com/android/launcher3/Workspace.smali')
+    specifier = MethodSpecifier()
+    specifier.name = 'initWorkspace'
+    old_body = smali.find_method(specifier)
     repl = r'''
     const/4 \g<2>, 0x1
 
     \g<1>
 '''
     new_body = re.sub(pattern, repl, old_body)
+    smali.method_replace(old_body, new_body)
+
+    smali = apk.open_smali('com/android/launcher3/OplusWorkspace.smali')
+    specifier = MethodSpecifier()
+    specifier.name = 'moveToDefaultScreen'
+    old_body = smali.find_method(specifier)
+    new_body = re.sub(pattern, '', old_body)
     smali.method_replace(old_body, new_body)
 
     apk.build()
@@ -425,22 +431,9 @@ def show_hidden_engineer_option():
     apk = ApkFile('system_ext/app/OplusCommercialEngineerMode/OplusCommercialEngineerMode.apk')
     if apk.not_need_modify():
         return
-    apk.refactor()
     apk.decode()
 
     ccglobal.log('显示工程模式中的隐藏选项')
-    xml = apk.open_xml('xml/as_multimedia_test.xml')
-    root = xml.get_root()
-    attr_title = xml.make_attr_key('android:title')
-    for index, element in enumerate(root):
-        if element.tag == 'androidx.preference.Preference' and element.get(attr_title) == '@string/lcd_brightness':
-            new_element = copy.deepcopy(element)
-            new_element.set(attr_title, '@string/lcd_info_title')
-            new_element.set(xml.make_attr_key('android:key'), 'lcd_info')
-            new_element.find('intent').set(xml.make_attr_key('android:targetClass'), 'com.oplus.engineermode.display.lcd.modeltest.LcdInfoActivity')
-            root.insert(index + 1, new_element)
-    xml.commit()
-
     smali = apk.open_smali('com/oplus/engineermode/impl/SecrecyServiceHelper.smali')
     specifier = MethodSpecifier()
     specifier.name = 'getSecrecyState'
@@ -482,54 +475,41 @@ def show_netmask_and_gateway():
 
     specifier = MethodSpecifier()
     specifier.parameters = ''
-    specifier.return_type = 'Z'
+    specifier.return_type = 'V'
     specifier.keywords.add('"WifiAddressController"')
     specifier.keywords.add('"updateIpInfo:')
-    update_ip_info_method = re.search(r'\.method public final (\S+?)\(\)Z', smali.find_method(specifier)).group(1)
-
-    specifier = MethodSpecifier()
-    specifier.parameters = ''
-    specifier.return_type = 'Z'
-    specifier.keywords.add(f'Lcom/oplus/wirelesssettings/wifi/detail2/WifiAddressController;->{update_ip_info_method}()Z')
 
     old_body = smali.find_method(specifier)
-    pattern = f'''\
-    .locals 1
-((?:.|\\n)*?
-    invoke-virtual {{p0}}, Lcom/oplus/wirelesssettings/wifi/detail2/WifiAddressController;->\\S+\\(\\)Z
-)
-    move-result p0
-((?:.|\\n)*?
-    invoke-virtual {{p0}}, Lcom/oplus/wirelesssettings/wifi/detail2/WifiAddressController;->{update_ip_info_method}\\(\\)Z
-)
-    move-result p0
-((?:.|\\n)*?)
-    return p0
+    pattern = '''\
+    .locals (\\w+)
 '''
+    register_count = int(re.search(pattern, old_body).group(1))
+    this_register = f'v{register_count}'
     repl = f'''\
-    .locals 4
-\\g<1>
-    move-result v0
-\\g<2>
-    move-result v0
+    .locals {register_count + 1}
 
-    if-eqz v0, :jump
-
-    iget-object v1, p0, Lcom/oplus/wirelesssettings/wifi/detail2/WifiAddressController;->{context_field}:Landroid/content/Context;
-
-    iget-object v2, p0, Lcom/oplus/wirelesssettings/wifi/detail2/WifiAddressController;->{ip_preference_field}:Landroidx/preference/Preference;
-
-    iget-object v3, p0, Lcom/oplus/wirelesssettings/wifi/detail2/WifiAddressController;->{ipv4_preference_field}:Landroidx/preference/Preference;
-
-    iget-object p0, p0, Lcom/oplus/wirelesssettings/wifi/detail2/WifiAddressController;->{ipv6_preference_field}:Landroidx/preference/Preference;
-
-    invoke-static {{v1, v2, v3, p0}}, Lcom/meolunr/colorcleaner/CcInjector;->\
-showNetmaskAndGateway(Landroid/content/Context;Landroidx/preference/Preference;Landroidx/preference/Preference;Landroidx/preference/Preference;)V
-
-    :jump\\g<3>
-    return v0
+    move-object {this_register}, p0
 '''
     new_body = re.sub(pattern, repl, old_body)
+
+    pattern = f'''\
+    return-void
+'''
+    repl = f'''\
+    iget-object v0, {this_register}, Lcom/oplus/wirelesssettings/wifi/detail2/WifiAddressController;->{context_field}:Landroid/content/Context;
+
+    iget-object v1, {this_register}, Lcom/oplus/wirelesssettings/wifi/detail2/WifiAddressController;->{ip_preference_field}:Landroidx/preference/Preference;
+
+    iget-object v2, {this_register}, Lcom/oplus/wirelesssettings/wifi/detail2/WifiAddressController;->{ipv4_preference_field}:Landroidx/preference/Preference;
+
+    iget-object v3, {this_register}, Lcom/oplus/wirelesssettings/wifi/detail2/WifiAddressController;->{ipv6_preference_field}:Landroidx/preference/Preference;
+
+    invoke-static {{v0, v1, v2, v3}}, Lcom/meolunr/colorcleaner/CcInjector;->\
+showNetmaskAndGateway(Landroid/content/Context;Landroidx/preference/Preference;Landroidx/preference/Preference;Landroidx/preference/Preference;)V
+
+    return-void
+'''
+    new_body = re.sub(pattern, repl, new_body)
     smali.method_replace(old_body, new_body)
 
     apk.build()
@@ -905,12 +885,6 @@ def patch_weather():
     specifier.parameters = 'Landroid/content/Context;'
     smali.method_return_boolean(specifier, False)
 
-    ccglobal.log('禁用未来 15 日天气展开')
-    specifier = MethodSpecifier()
-    specifier.name = 'isAllow15DayExpand'
-    specifier.parameters = 'Lcom/oplus/weather/main/model/WeatherWrapper;'
-    smali.method_return_boolean(specifier, False)
-
     ccglobal.log('逐小时天气跳转折线图')
     smali = apk.open_smali('com/oplus/weather/main/view/itemview/HourlyChildWeatherItem.smali')
     specifier = MethodSpecifier()
@@ -930,8 +904,8 @@ def patch_weather():
     ccglobal.log('未来 15 日天气跳转折线图')
     smali = apk.open_smali('com/oplus/weather/main/view/itemview/FutureDayWeatherChildItem.smali')
     specifier = MethodSpecifier()
-    specifier.name = 'onFutureDayClicked'
-    specifier.parameters = 'Landroid/view/View;'
+    specifier.name = 'onFutureDayClickedItem'
+    specifier.parameters = 'Landroid/view/View;I'
 
     old_body = smali.find_method(specifier)
     pattern = '''
