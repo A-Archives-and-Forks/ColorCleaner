@@ -37,12 +37,12 @@ def unpack_img():
 def read_rom_information():
     with open('my_manifest/build.prop', 'r', encoding='utf-8') as f:
         for line in f:
-            if line.startswith('ro.product.name='):
-                ccglobal.device = ccglobal.get_prop_value(line)
+            if line.startswith('ro.build.fingerprint='):
+                splits = ccglobal.get_prop_value(line).split('/')
+                ccglobal.device = splits[1]
+                ccglobal.sdk = splits[2].split(':')[1]
             elif line.startswith('ro.build.display.id='):
                 ccglobal.version = re.match(r'.+_(\d+\.\d+\.\d+\.\d+)\(.+', ccglobal.get_prop_value(line)).group(1)
-            elif line.startswith('ro.build.version.release='):
-                ccglobal.sdk = ccglobal.get_prop_value(line)
 
     pattern = re.compile(r'.*?(\d+\.\d+).+?-(android\d+)')
     with open('boot/kernel', 'rb') as f:

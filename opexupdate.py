@@ -75,12 +75,13 @@ def create_headers(prop_file: os.PathLike[str]):
 
     with open(prop_file, 'r', encoding='utf-8') as f:
         for line in f:
-            if line.startswith('ro.product.model='):
-                headers['model'] = ccglobal.get_prop_value(line)
-            elif line.startswith('ro.product.name='):
-                headers['productName'] = ccglobal.get_prop_value(line)
-            elif line.startswith('ro.build.version.release='):
-                headers['androidVersion'] = f'Android{ccglobal.get_prop_value(line)}'
+            if line.startswith('ro.build.fingerprint='):
+                splits = ccglobal.get_prop_value(line).split('/')
+                headers['brand'] = splits[0]
+                headers['brandSota'] = splits[0]
+                headers['model'] = splits[1]
+                headers['productName'] = splits[1]
+                headers['androidVersion'] = f'Android{splits[2].split(':')[1]}'
             elif line.startswith('ro.build.version.oplusrom='):
                 coloros_version = f'ColorOS{re.match(r'V(\d+\.\d+\.\d+)', ccglobal.get_prop_value(line)).group(1)}'
                 headers['osVersion'] = coloros_version
@@ -89,15 +90,8 @@ def create_headers(prop_file: os.PathLike[str]):
                 headers['romVersion'] = ccglobal.get_prop_value(line)
             elif line.startswith('ro.build.version.ota='):
                 headers['otaVersion'] = ccglobal.get_prop_value(line)
-            elif line.startswith('ro.product.vendor.brand='):
-                brand = ccglobal.get_prop_value(line)
-                headers['brand'] = brand
-                headers['brandSota'] = brand
             elif line.startswith('ro.oplus.image.my_stock.type='):
                 headers['osType'] = ccglobal.get_prop_value(line)
-
-    if 'androidVersion' not in headers:
-        headers['androidVersion'] = f'Android{headers['osVersion'][7:9]}'
 
     return headers
 
