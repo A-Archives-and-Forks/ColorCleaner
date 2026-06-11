@@ -96,6 +96,9 @@ def create_headers(prop_file: os.PathLike[str]):
             elif line.startswith('ro.oplus.image.my_stock.type='):
                 headers['osType'] = ccglobal.get_prop_value(line)
 
+    if 'androidVersion' not in headers:
+        headers['androidVersion'] = f'Android{headers['osVersion'][7:9]}'
+
     return headers
 
 
