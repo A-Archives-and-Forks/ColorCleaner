@@ -45,7 +45,7 @@ def read_rom_information():
                 ccglobal.version = re.match(r'.+_(\d+\.\d+\.\d+\.\d+)\(.+', ccglobal.get_prop_value(line)).group(1)
 
     pattern = re.compile(r'.*?(\d+\.\d+).+?-(android\d+)')
-    with open('boot/kernel', 'rb') as f:
+    with open('images/boot.img', 'rb') as f:
         for item in f.read().split(b'\x00'):
             try:
                 item = item.decode('utf-8')
@@ -58,20 +58,16 @@ def read_rom_information():
                     break
 
 
-def custom_kernel(file: str):
-    if not file or not os.path.isfile(file):
-        return
-    ccglobal.log('自定义内核镜像')
-    shutil.copy(file, 'boot/kernel')
-
-
-def install_lkm(no_lkm: bool):
-    if no_lkm:
-        return
-    ccglobal.log('安装 KernelSU LKM')
-
+def patch_boot(kernel: str, no_lkm: bool):
     ksud = f'{ccglobal.LIB_DIR}/ksud.exe'
-    subprocess.run([ksud, 'boot-patch', '-b', 'images/init_boot.img', '--kmi', ccglobal.kmi, '--out-name', 'images/init_boot.img'], check=True)
+
+    if kernel and os.path.isfile(kernel):
+        ccglobal.log('自定义内核镜像')
+        subprocess.run([ksud, 'boot-patch', '-b', 'images/boot.img', '-k', kernel, '--out-name', 'images/boot.img'], check=True)
+
+    if not no_lkm:
+        ccglobal.log('安装 KernelSU LKM')
+        subprocess.run([ksud, 'boot-patch', '-b', 'images/init_boot.img', '--kmi', ccglobal.kmi, '--out-name', 'images/init_boot.img'], check=True)
 
 
 def patch_vbmeta():
@@ -267,8 +263,7 @@ def make_rom(args: argparse.Namespace):
     dump_payload(args.file)
     unpack_img()
     read_rom_information()
-    custom_kernel(args.kernel)
-    install_lkm(args.no_lkm)
+    patch_boot(args.kernel, args.no_lkm)
     patch_vbmeta()
     disable_avb_and_dm_verity()
     move_deletable_apk()

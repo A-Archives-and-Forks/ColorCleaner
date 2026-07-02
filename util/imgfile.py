@@ -1,14 +1,12 @@
 import io
 import os
 import re
-import shutil
 import subprocess
 from enum import Enum, auto
 from pathlib import Path
 
 import ccglobal
 
-_MAGISKBOOT = f'{ccglobal.LIB_DIR}/magiskboot.exe'
 _EXTRACT_EROFS = f'{ccglobal.LIB_DIR}/extract.erofs.exe'
 _MKFS_EROFS = f'{ccglobal.LIB_DIR}/mkfs.erofs.exe'
 _E2FS_TOOL = f'{ccglobal.LIB_DIR}/e2fstool.exe'
@@ -53,14 +51,6 @@ def unpack(file: str, partition: str, out_dir: str = '.'):
             subprocess.run([_EXTRACT_EROFS, '-x', '-i', file, '-o', out_dir], check=True)
         case FileSystem.EXT4:
             subprocess.run([_E2FS_TOOL, file, f'{out_dir}/{partition}'], check=True)
-        case FileSystem.BOOT:
-            cwd = os.getcwd()
-            partition_dir = f'{out_dir}/{partition}'
-            os.mkdir(partition_dir)
-            shutil.copy(file, f'{partition_dir}/{partition}.img')
-            os.chdir(partition_dir)
-            subprocess.run([_MAGISKBOOT, 'unpack', f'{partition}.img'], check=True)
-            os.chdir(cwd)
 
 
 def repack(file: str, partition: str, out_dir: str = '.'):
@@ -74,11 +64,6 @@ def repack(file: str, partition: str, out_dir: str = '.'):
         case FileSystem.EROFS:
             subprocess.run([_MKFS_EROFS, '-zlz4hc,1', '-T', '1230768000', '--mount-point', f'/{partition}', '--fs-config-file', f'{out_dir}/config/{partition}_fs_config',
                             '--file-contexts', f'{out_dir}/config/{partition}_file_contexts', file, f'{out_dir}/{partition}'], check=True)
-        case FileSystem.BOOT:
-            cwd = os.getcwd()
-            os.chdir(f'{out_dir}/{partition}')
-            subprocess.run([_MAGISKBOOT, 'repack', f'{partition}.img', f'{cwd}/{file}'], check=True)
-            os.chdir(cwd)
 
 
 def sync_app_perm_and_context(partition: str, out_dir: str = '.'):
