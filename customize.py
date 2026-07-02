@@ -561,34 +561,21 @@ def patch_phone_manager():
     apk.decode()
 
     ccglobal.log('去除手机管家广告')
-    smali = apk.find_smali('"AdHelper.kt"', '"ro.vendor.oplus.market.name"', package='com/oplus/phonemanager/common/ad').pop()
+    smali = apk.find_smali('"AdHelper.kt"', 'isSupportMarketAd', package='com/oplus/phonemanager/common/ad').pop()
     specifier = MethodSpecifier()
-    specifier.name = 'invoke'
-    specifier.return_type = 'Ljava/lang/Boolean;'
-    specifier.keywords.add('"ro.vendor.oplus.market.name"')
-    new_body = '''\
-.method public final invoke()Ljava/lang/Boolean;
-    .locals 1
-
-    const/4 v0, 0x0
-
-    invoke-static {v0}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
-
-    move-result-object v0
-
-    return-object v0
-.end method\
-'''
-    smali.method_replace(specifier, new_body)
+    specifier.access = MethodSpecifier.Access.PUBLIC
+    specifier.is_static = True
+    specifier.is_final = True
+    specifier.return_type = 'Z'
+    specifier.keywords.add('"AdHelper"')
+    specifier.keywords.add('isSupportMarketAd')
+    smali.method_return_boolean(specifier, False)
 
     ccglobal.log('去除手机管家中的安全事件')
     smali = apk.find_smali('MainWithMenuFragment.kt', '"com.coloros.securityguard"', package='com/oplus/phonemanager').pop()
     specifier = MethodSpecifier()
-    specifier.access = MethodSpecifier.Access.PRIVATE
-    specifier.is_final = True
-    specifier.parameters = 'Landroid/content/Context;Landroid/view/Menu;'
-    specifier.return_type = 'V'
-    specifier.keywords.add('"com.coloros.securityguard"')
+    specifier.name = 'onPrepareOptionsMenu'
+    specifier.parameters = 'Landroid/view/Menu;'
 
     old_body = smali.find_method(specifier)
     pattern = r'''
@@ -616,14 +603,11 @@ def patch_phone_manager():
     smali.method_return_null(specifier)
 
     ccglobal.log('病毒扫描永远安全')
-    smali = apk.find_smali('"InfectedAppDao_Impl.java"', '"select * from infected_app"').pop()
+    smali = apk.open_smali('com/oplus/phonemanager/dependeninjectability/vr/entity/ScanResult.smali')
     specifier = MethodSpecifier()
-    specifier.access = MethodSpecifier.Access.PUBLIC
-    specifier.parameters = 'Ljava/util/List;'
-    specifier.return_type = 'V'
-    specifier.keywords.add('"Lcom/oplus/phonemanager/virusdetect/database/entity/InfectedApp;"')
-    specifier.keywords.add('->insert(Ljava/lang/Iterable;)V')
-    smali.method_nop(specifier)
+    specifier.name = 'hasVirus'
+    specifier.parameters = ''
+    smali.method_return_boolean(specifier, False)
 
     apk.build()
 
