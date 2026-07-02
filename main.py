@@ -71,8 +71,7 @@ def install_lkm(no_lkm: bool):
     ccglobal.log('安装 KernelSU LKM')
 
     ksud = f'{ccglobal.LIB_DIR}/ksud.exe'
-    magiskboot = f'{ccglobal.LIB_DIR}/magiskboot.exe'
-    subprocess.run([ksud, 'boot-patch', '--magiskboot', magiskboot, '-b', 'images/init_boot.img', '--kmi', ccglobal.kmi, '--out-name', 'images/init_boot.img'], check=True)
+    subprocess.run([ksud, 'boot-patch', '-b', 'images/init_boot.img', '--kmi', ccglobal.kmi, '--out-name', 'images/init_boot.img'], check=True)
 
 
 def patch_vbmeta():
