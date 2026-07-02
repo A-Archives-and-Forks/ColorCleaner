@@ -149,7 +149,7 @@ def get_target_opex_update(operator: RegionCN, headers: dict[str, str], request_
 
     match operator:
         case RegionCN.FULL_OTA:
-            return response_body['otaVersion'], response_body['opex']['opexPackage']
+            return response_body['otaVersion'], response_body.get('opex', dict()).get('opexPackage')
         case RegionCN.OPEX:
             return headers['otaVersion'], response_body['data']
 
