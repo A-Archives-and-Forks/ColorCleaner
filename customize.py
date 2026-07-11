@@ -248,6 +248,41 @@ Lcom/android/systemui/statusbar/policy/DeviceProvisionedController;')
     new_body = re.sub(pattern, repl, old_body)
     smali.method_replace(old_body, new_body)
 
+    ccglobal.log('手电筒默认最高亮度')
+    smali = apk.find_smali('FlashlightControllerImpl$', '.super Landroid/hardware/camera2/CameraManager$TorchCallback;', package='com/android/systemui/statusbar/policy').pop()
+    specifier = MethodSpecifier()
+    specifier.name = 'setTorchMode'
+    specifier.parameters = 'Z'
+
+    old_body = smali.find_method(specifier)
+    pattern = r'''
+    (:cond_\d+)
+    iget-object [v|p]\d+, [v|p]\d+, Lcom/android/systemui/statusbar/policy/FlashlightControllerImpl;->mResetFlashlightMemoryLevelRunnable:.+?
+(?:.|\n)*?
+    const-wide/32 [v|p]\d+, 0x493e0
+(?:.|\n)*?
+    invoke-virtual {(?:[v|p]\d+, ){3}[v|p]\d+}, Landroid/os/Handler;->postDelayed\(Ljava/lang/Runnable;J\)Z
+'''
+    repl = r'''
+    \g<1>
+'''
+    new_body = re.sub(pattern, repl, old_body)
+
+    pattern = r'''
+(    iget-boolean [v|p]\d+, [v|p]\d+, Lcom/android/systemui/statusbar/policy/FlashlightControllerImpl;->mCameraDefaultLevel:Z
+(?:.|\n)*?
+    iget [v|p]\d+, [v|p]\d+, Lcom/android/systemui/statusbar/policy/FlashlightControllerImpl;->mDefaultLevel:I
+(?:.|\n)*?
+    :cond_\d+)
+    const/4 ([v|p]\d+), 0x2
+'''
+    repl = r'''
+\g<1>
+    const/4 \g<2>, 0x4
+'''
+    new_body = re.sub(pattern, repl, new_body)
+    smali.method_replace(old_body, new_body)
+
     apk.build()
 
 
