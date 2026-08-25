@@ -32,7 +32,7 @@
 
     if-eq v0, v2, :cond_0
 
-    if-ne v1, v2, :cond_2
+    if-ne v1, v2, :cond_3
 
     :cond_0
     const-string v3, "actions"
@@ -48,7 +48,7 @@
 
     move-result v5
 
-    if-ge v4, v5, :cond_2
+    if-ge v4, v5, :cond_3
 
     invoke-virtual {v3, v4}, Lorg/json/JSONArray;->optJSONObject(I)Lorg/json/JSONObject;
 
@@ -60,11 +60,15 @@
 
     move-result v5
 
+    const/4 v6, 0x3
+
+    if-eq v5, v6, :cond_2
+
     const/4 v6, 0x6
 
     if-ne v5, v6, :cond_1
 
-    return v2
+    goto :goto_1
 
     :cond_1
     add-int/lit8 v4, v4, 0x1
@@ -72,6 +76,10 @@
     goto :goto_0
 
     :cond_2
+    :goto_1
+    return v2
+
+    :cond_3
     const/4 v2, 0x0
 
     return v2

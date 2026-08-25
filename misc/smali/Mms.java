@@ -12,7 +12,7 @@ public class CcInjector {
             JSONArray actionsJsonArray = entityJson.optJSONArray("actions");
             for (int i = 0; i < actionsJsonArray.length(); i++) {
                 int action = actionsJsonArray.optJSONObject(i).optInt("action");
-                if (action == 6) {
+                if (action == 3 || action == 6) {
                     return true;
                 }
             }
