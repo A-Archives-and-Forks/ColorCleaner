@@ -323,7 +323,7 @@ def patch_launcher():
     invoke-static {}, Lcom/android/launcher/mode/LauncherModeManager;->getInstance\(\)Lcom/android/launcher/mode/LauncherModeManager;
 (?:.|\n)*?
     move-result [v|p]\d+
-
+(?:.|\n)*?
     (sput ([v|p]\d+), Lcom/android/launcher3/Workspace;->DEFAULT_PAGE:I)
 '''
 
