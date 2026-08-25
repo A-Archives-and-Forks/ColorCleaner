@@ -16,7 +16,6 @@ system/system/priv-app/MusicFX
 system/system/priv-app/ONS
 system/system/priv-app/SharedStorageBackup
 system/system/priv-app/UserDictionaryProvider
-system/system/apex/com.android.cellbroadcast.apex
 system_ext/app/AccessibilityMenu
 system_ext/app/CloudAccService
 system_ext/app/HealthService
