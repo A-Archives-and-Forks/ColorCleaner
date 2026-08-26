@@ -8,7 +8,7 @@ import shutil
 import subprocess
 import time
 from glob import iglob
-from pathlib import Path, PurePath
+from pathlib import Path
 
 import appupdate
 import ccglobal
@@ -94,13 +94,6 @@ def disable_avb_and_dm_verity():
             f.seek(0)
             f.truncate()
             f.writelines(lines)
-
-
-def move_deletable_apk():
-    ccglobal.log('移动可删除的系统应用')
-    for item in config.MODIFY_DELETABLE_APK:
-        dir_path = PurePath(item).parent
-        shutil.move(dir_path, dir_path.parent.parent.joinpath('app'))
 
 
 def repack_img():
@@ -266,7 +259,6 @@ def make_rom(args: argparse.Namespace):
     patch_boot(args.kernel, args.no_lkm)
     patch_vbmeta()
     disable_avb_and_dm_verity()
-    move_deletable_apk()
     opexupdate.run_on_rom(args.opex_files)
     appupdate.run_on_rom()
     customize.run_on_rom()

@@ -16,6 +16,7 @@ MODIFY_PACKAGE = (
     'com.oplus.trafficmonitor',
     'com.oplus.notificationmanager',
     'com.heytap.mcs',
+    'com.android.mms',
     'com.coloros.calendar',
     'com.coloros.weather2',
     'com.heytap.market'

@@ -29,6 +29,20 @@ class NewApp(object):
         self.version_code = None
 
 
+def move_deletable_apk():
+    ccglobal.log('移动可删除的系统应用')
+    for item in config.MODIFY_DELETABLE_APK:
+        src_apk = Path(item)
+        dst_dir = src_apk.parents[2] / 'app' / src_apk.stem
+        dst_dir.mkdir(parents=True, exist_ok=True)
+
+        if ApkFile(str(src_apk)).extract_native_libs():
+            _7z = f'{ccglobal.LIB_DIR}/7za.exe'
+            subprocess.run([_7z, 'e', '-aoa', src_apk, 'lib/arm64-v8a', f'-o{dst_dir}/lib/arm64'], stdout=subprocess.DEVNULL)
+
+        src_apk.move_into(dst_dir)
+
+
 def get_updated_system_packages():
     data = set()
     for line in adb.getoutput('pm list packages -f -s'):
@@ -163,6 +177,8 @@ def pull_apks_from_device(new_apks: list[str], old_dir: str):
 
 
 def run_on_rom():
+    move_deletable_apk()
+
     if not adb.is_connected():
         return
     packages = set()
